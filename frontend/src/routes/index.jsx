@@ -7,10 +7,13 @@ import { ExplorePage } from '../pages/public/ExplorePage';
 import { IssueMapPage } from '../pages/public/IssueMapPage';
 import { IssueDetailPage } from '../pages/public/IssueDetailPage';
 import { GuestPage } from '../pages/public/GuestPage';
+import { GuestDashboardPage } from '../pages/public/GuestDashboardPage';
 
 // Auth Pages
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
+import { GuestLoginPage } from '../pages/auth/GuestLoginPage';
+import { GuestRegisterPage } from '../pages/auth/GuestRegisterPage';
 import { UnauthorizedPage } from '../pages/auth/UnauthorizedPage';
 import { NotFoundPage } from '../pages/auth/NotFoundPage';
 
@@ -32,31 +35,36 @@ import { AdminAnalyticsPage } from '../pages/admin/AdminAnalyticsPage';
 // Route Guards
 import { ProtectedRoute } from './ProtectedRoute';
 import { AdminRoute } from './AdminRoute';
+import { useAuth } from '../context/AuthContext';
+
+function DashboardRouteWrapper() {
+  const { user } = useAuth();
+  if (!user || user.role === 'GUEST') {
+    return <GuestDashboardPage />;
+  }
+  return <CitizenDashboardPage />;
+}
 
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* Public & Guest Routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/explore" element={<ExplorePage />} />
       <Route path="/guest" element={<GuestPage />} />
+      <Route path="/guest-dashboard" element={<GuestDashboardPage />} />
       <Route path="/map" element={<IssueMapPage />} />
       <Route path="/issues/:id" element={<IssueDetailPage />} />
 
       {/* Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/guest-login" element={<GuestLoginPage />} />
+      <Route path="/guest-register" element={<GuestRegisterPage />} />
       <Route path="/403" element={<UnauthorizedPage />} />
 
-      {/* Citizen Protected Routes */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <CitizenDashboardPage />
-          </ProtectedRoute>
-        }
-      />
+      {/* Dashboard Route (Handles Citizen or Guest dynamically) */}
+      <Route path="/dashboard" element={<DashboardRouteWrapper />} />
       <Route
         path="/report"
         element={

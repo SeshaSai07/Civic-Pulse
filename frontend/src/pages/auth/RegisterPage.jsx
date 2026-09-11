@@ -102,11 +102,19 @@ export function RegisterPage() {
             </Button>
           </form>
 
-          <div className="text-center text-xs text-purple-700/80 dark:text-purple-300/80 pt-2 border-t border-purple-100 dark:border-purple-900/30">
-            Already have an account?{' '}
-            <Link to="/login" className="font-bold text-violet-600 dark:text-violet-400 hover:text-violet-700 underline">
-              Sign In
-            </Link>
+          <div className="space-y-1.5 text-center text-xs text-purple-700/80 dark:text-purple-300/80 pt-2 border-t border-purple-100 dark:border-purple-900/30">
+            <div>
+              Already have an account?{' '}
+              <Link to="/login" className="font-bold text-violet-600 dark:text-violet-400 hover:text-violet-700 underline">
+                Sign In
+              </Link>
+            </div>
+            <div>
+              Prefer browsing without an account?{' '}
+              <Link to="/guest-register" className="font-extrabold text-emerald-600 dark:text-emerald-400 hover:underline">
+                Create Guest Profile &rarr;
+              </Link>
+            </div>
           </div>
         </div>
       </div>

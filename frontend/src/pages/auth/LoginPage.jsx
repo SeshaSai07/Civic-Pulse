@@ -79,14 +79,14 @@ export function LoginPage() {
               <UserCheck className="w-4 h-4 text-violet-600 dark:text-violet-400" />
               <span>Quick Demo Preset Login:</span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickPreset('CITIZEN')}
                 className="p-2 bg-white dark:bg-purple-900/60 hover:bg-violet-100 dark:hover:bg-purple-900 rounded-lg border border-violet-200 dark:border-violet-700 text-violet-800 dark:text-violet-200 font-semibold text-left text-[11px] transition"
               >
                 Jane Citizen
-                <span className="block text-[10px] text-purple-600 dark:text-purple-400 font-normal">citizen@civicpulse.org</span>
+                <span className="block text-[9px] text-purple-600 dark:text-purple-400 font-normal">Citizen Role</span>
               </button>
 
               <button
@@ -94,8 +94,21 @@ export function LoginPage() {
                 onClick={() => handleQuickPreset('ADMIN')}
                 className="p-2 bg-white dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 rounded-lg border border-amber-200 dark:border-amber-700 text-amber-900 dark:text-amber-200 font-semibold text-left text-[11px] transition"
               >
-                Alex Rivera (Admin)
-                <span className="block text-[10px] text-amber-600 dark:text-amber-400 font-normal">admin@civicpulse.org</span>
+                Alex Rivera
+                <span className="block text-[9px] text-amber-600 dark:text-amber-400 font-normal">Admin Role</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  switchDemoRole('GUEST');
+                  toast.info('Switched to Guest Visitor');
+                  navigate('/guest-dashboard');
+                }}
+                className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-left text-[11px] transition"
+              >
+                Guest Visitor
+                <span className="block text-[9px] text-slate-500 font-normal">Guest Role</span>
               </button>
             </div>
           </div>
@@ -124,11 +137,19 @@ export function LoginPage() {
             </Button>
           </form>
 
-          <div className="text-center text-xs text-purple-700/80 dark:text-purple-300/80 pt-2 border-t border-purple-100 dark:border-purple-900/30">
-            Don't have an account?{' '}
-            <Link to="/register" className="font-bold text-violet-600 dark:text-violet-400 hover:text-violet-700 underline">
-              Register as Citizen
-            </Link>
+          <div className="space-y-1.5 text-center text-xs text-purple-700/80 dark:text-purple-300/80 pt-2 border-t border-purple-100 dark:border-purple-900/30">
+            <div>
+              Don't have an account?{' '}
+              <Link to="/register" className="font-bold text-violet-600 dark:text-violet-400 hover:text-violet-700 underline">
+                Register as Citizen
+              </Link>
+            </div>
+            <div>
+              Visiting as a Guest?{' '}
+              <Link to="/guest-login" className="font-extrabold text-emerald-600 dark:text-emerald-400 hover:underline">
+                Guest Sign In &rarr;
+              </Link>
+            </div>
           </div>
         </div>
       </div>
