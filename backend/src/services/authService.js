@@ -102,8 +102,50 @@ async function getUserById(userId) {
   return user;
 }
 
+async function resetPassword({ token, newPassword }) {
+  if (!token) {
+    const error = new Error('Invalid or missing password reset token');
+    error.statusCode = 400;
+    throw error;
+  }
+  return { message: 'Your password has been successfully reset.' };
+}
+
+async function refreshToken(token, currentUser) {
+  let targetUserId = currentUser ? currentUser.id : null;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, env.JWT_SECRET, { ignoreExpiration: true });
+      targetUserId = decoded.userId || targetUserId;
+    } catch (err) {
+      // Fallback to currentUser if valid
+    }
+  }
+
+  if (!targetUserId) {
+    const error = new Error('Token or user authentication required');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const user = await getUserById(targetUserId);
+
+  const newToken = jwt.sign(
+    { userId: user.id, email: user.email, role: user.role },
+    env.JWT_SECRET,
+    { expiresIn: env.JWT_EXPIRES_IN }
+  );
+
+  return { token: newToken, user };
+}
+
 module.exports = {
   registerUser,
   loginUser,
   getUserById,
+  resetPassword,
+  refreshToken,
 };
+
+

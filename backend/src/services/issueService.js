@@ -415,12 +415,83 @@ async function getNearbyIssues(lat, lng, radiusKm = 2.0) {
   });
 }
 
+async function updateIssue(issueId, updateData, currentUser) {
+  const issue = await prisma.issue.findUnique({
+    where: { id: issueId },
+    include: { category: true, images: true, user: true },
+  });
+
+  if (!issue) {
+    const error = new Error('Issue report not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (issue.userId !== currentUser.id && currentUser.role !== 'ADMIN') {
+    const error = new Error('Unauthorized to modify this issue report');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  let newPriorityScore = issue.priorityScore;
+  if (updateData.severity || updateData.status) {
+    newPriorityScore = calculatePriorityScore({
+      severity: updateData.severity || issue.severity,
+      confirmationsCount: issue.confirmationsCount,
+      categoryWeight: issue.category?.priorityWeight || 1.0,
+      createdAt: issue.createdAt,
+    });
+  }
+
+  const dataToUpdate = {
+    ...(updateData.title && { title: updateData.title }),
+    ...(updateData.description && { description: updateData.description }),
+    ...(updateData.categoryId && { categoryId: updateData.categoryId }),
+    ...(updateData.severity && { severity: updateData.severity }),
+    ...(updateData.status && { status: updateData.status }),
+    ...(updateData.latitude && { latitude: Number(updateData.latitude) }),
+    ...(updateData.longitude && { longitude: Number(updateData.longitude) }),
+    ...(updateData.address && { address: updateData.address }),
+    priorityScore: newPriorityScore,
+  };
+
+  const updated = await prisma.issue.update({
+    where: { id: issueId },
+    data: dataToUpdate,
+    include: { category: true, images: true, user: { select: { id: true, name: true, avatarUrl: true } } },
+  });
+
+  return updated;
+}
+
+async function deleteIssue(issueId, currentUser) {
+  const issue = await prisma.issue.findUnique({ where: { id: issueId } });
+
+  if (!issue) {
+    const error = new Error('Issue report not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (issue.userId !== currentUser.id && currentUser.role !== 'ADMIN') {
+    const error = new Error('Unauthorized to delete this issue report');
+    error.statusCode = 403;
+    throw error;
+  }
+
+  await prisma.issue.delete({ where: { id: issueId } });
+  return { message: 'Issue report deleted successfully', id: issueId };
+}
+
 module.exports = {
   getIssues,
   getIssueById,
   createIssue,
+  updateIssue,
+  deleteIssue,
   confirmIssue,
   unconfirmIssue,
   addComment,
   getNearbyIssues,
 };
+

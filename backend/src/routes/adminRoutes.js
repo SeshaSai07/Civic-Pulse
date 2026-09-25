@@ -11,6 +11,7 @@ const { authorizeRoles } = require('../middleware/authorize');
 router.use(authenticateToken, authorizeRoles('ADMIN'));
 
 router.get('/dashboard', adminController.getDashboardStats);
+router.get('/analytics', adminController.getAdminAnalytics);
 router.get('/issues', adminController.getAdminIssues);
 router.get('/issues/:id/review', adminController.getAdminIssueReview);
 router.patch('/issues/:id/status', validateBody(updateStatusSchema), adminController.updateStatus);
@@ -20,8 +21,10 @@ router.post('/issues/:id/merge', validateBody(mergeIssueSchema), adminController
 router.get('/categories', adminController.getCategories);
 router.post('/categories', validateBody(categorySchema), adminController.createCategory);
 router.patch('/categories/:id', adminController.updateCategory);
+router.delete('/categories/:id', adminController.deleteCategory);
 
 router.get('/users', adminController.getUsers);
 router.patch('/users/:id/role', validateBody(updateUserRoleSchema), adminController.updateUserRole);
 
 module.exports = router;
+

@@ -44,10 +44,33 @@ async function logout(req, res, next) {
   }
 }
 
+async function resetPassword(req, res, next) {
+  try {
+    const result = await authService.resetPassword(req.body);
+    return sendSuccess(res, result, 'Password reset successfully');
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function refreshToken(req, res, next) {
+  try {
+    const token = req.body?.token || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
+    const result = await authService.refreshToken(token, req.user);
+    return sendSuccess(res, result, 'Token refreshed successfully');
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   register,
   login,
   getCurrentUser,
   forgotPassword,
   logout,
+  resetPassword,
+  refreshToken,
 };
+
+

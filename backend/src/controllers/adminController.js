@@ -115,6 +115,24 @@ async function updateUserRole(req, res, next) {
   }
 }
 
+async function deleteCategory(req, res, next) {
+  try {
+    const result = await adminService.deleteCategory(req.params.id);
+    return sendSuccess(res, result, 'Category deleted/deactivated successfully');
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getAdminAnalytics(req, res, next) {
+  try {
+    const analytics = await adminService.getAdminAnalytics();
+    return res.status(200).json(analytics);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getDashboardStats,
   getAdminIssues,
@@ -125,6 +143,9 @@ module.exports = {
   getCategories,
   createCategory,
   updateCategory,
+  deleteCategory,
   getUsers,
   updateUserRole,
+  getAdminAnalytics,
 };
+

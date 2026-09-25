@@ -54,10 +54,31 @@ async function getIssueDuplicates(req, res, next) {
   }
 }
 
+async function updateIssue(req, res, next) {
+  try {
+    const updated = await issueService.updateIssue(req.params.id, req.body, req.user);
+    return sendSuccess(res, updated, 'Issue report updated successfully');
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteIssue(req, res, next) {
+  try {
+    const result = await issueService.deleteIssue(req.params.id, req.user);
+    return sendSuccess(res, result, 'Issue report deleted successfully');
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getIssues,
   getIssueById,
   createIssue,
+  updateIssue,
+  deleteIssue,
   getNearbyIssues,
   getIssueDuplicates,
 };
+

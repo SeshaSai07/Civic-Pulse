@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const pinoHttp = require('pino-http');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./docs/swagger');
 const logger = require('./config/logger');
 const env = require('./config/env');
 const apiRoutes = require('./routes');
@@ -11,7 +13,7 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 const app = express();
 
 // Security Middlewares
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(
   cors({
     origin: env.CLIENT_URL || '*',
@@ -23,6 +25,9 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(pinoHttp({ logger }));
+
+// Swagger OpenAPI Documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Rate Limiting
 app.use('/api', apiLimiter);

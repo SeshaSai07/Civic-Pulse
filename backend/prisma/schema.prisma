@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -7,33 +7,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
-enum Role {
-  CITIZEN
-  ADMIN
-  GUEST
-}
-
-enum Status {
-  OPEN
-  UNDER_REVIEW
-  IN_PROGRESS
-  RESOLVED
-  REJECTED
-}
-
-enum Severity {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
-
 model User {
   id           String              @id @default(uuid())
   name         String
   email        String              @unique
   passwordHash String              @map("password_hash")
-  role         Role                @default(CITIZEN)
+  role         String              @default("CITIZEN")
   avatarUrl    String?             @map("avatar_url")
   createdAt    DateTime            @default(now()) @map("created_at")
   updatedAt    DateTime            @updatedAt @map("updated_at")
@@ -68,8 +47,8 @@ model Issue {
   categoryId         String               @map("category_id")
   title              String
   description        String
-  status             Status               @default(OPEN)
-  severity           Severity             @default(MEDIUM)
+  status             String               @default("OPEN")
+  severity           String               @default("MEDIUM")
   priorityScore      Int                  @default(35) @map("priority_score")
   latitude           Float
   longitude          Float
@@ -135,8 +114,8 @@ model Comment {
 model IssueStatusHistory {
   id        String   @id @default(uuid())
   issueId   String   @map("issue_id")
-  oldStatus Status?  @map("old_status")
-  newStatus Status   @map("new_status")
+  oldStatus String?  @map("old_status")
+  newStatus String   @map("new_status")
   changedBy String   @map("changed_by")
   note      String?
   createdAt DateTime @default(now()) @map("created_at")
@@ -183,7 +162,7 @@ model AuditLog {
   action      String
   entityType  String   @map("entity_type")
   entityId    String   @map("entity_id")
-  metadataJson Json?   @map("metadata_json")
+  metadataJson String? @map("metadata_json")
   createdAt   DateTime @default(now()) @map("created_at")
 
   actorUser   User     @relation("ActorUser", fields: [actorUserId], references: [id], onDelete: Cascade)
