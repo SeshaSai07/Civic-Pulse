@@ -3,13 +3,35 @@ import { calculatePriorityScore } from './priorityScoringService';
 import { calculateDistanceKm } from './duplicateDetectionService';
 
 export const issueService = {
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const response = await apiClient.post('/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return {
+        imageUrl: response.data.imageUrl || response.data.data?.imageUrl,
+        publicId: response.data.publicId || response.data.data?.publicId,
+      };
+    } catch (err) {
+      console.warn('POST /api/upload failed or unavailable, fallback to Object URL preview:', err.message);
+      return {
+        imageUrl: typeof file === 'string' ? file : URL.createObjectURL(file),
+        publicId: `upload_fallback_${Date.now()}`,
+      };
+    }
+  },
+
   async getIssues(params = {}) {
     const {
       search = '',
       category = 'all',
       status = 'all',
       severity = 'all',
-      sort = 'newest', // 'newest', 'priority', 'confirmations'
+      sort = 'newest',
       page = 1,
       limit = 10,
     } = params;
@@ -37,7 +59,7 @@ export const issueService = {
     }
 
     if (category !== 'all') {
-      list = list.filter((item) => item.categoryId === category || item.categoryName.toLowerCase().includes(category.toLowerCase()));
+      list = list.filter((item) => item.categoryId === category || item.categoryName?.toLowerCase().includes(category.toLowerCase()));
     }
 
     if (status !== 'all') {
@@ -48,15 +70,12 @@ export const issueService = {
       list = list.filter((item) => item.severity === severity);
     }
 
-    // Sort
     list.sort((a, b) => {
       if (sort === 'priority') return b.priorityScore - a.priorityScore;
       if (sort === 'confirmations') return b.confirmationsCount - a.confirmationsCount;
-      // Default newest
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
 
-    // Pagination
     const total = list.length;
     const totalPages = Math.ceil(total / limit) || 1;
     const startIndex = (page - 1) * limit;
@@ -76,7 +95,7 @@ export const issueService = {
       const response = await apiClient.get(`/issues/${id}`);
       if (response.data) return response.data;
     } catch (err) {
-      // Fallback
+      console.warn('Backend getIssueById failed, using local DB:', err.message);
     }
 
     const issues = mockDB.getIssues();
@@ -120,10 +139,10 @@ export const issueService = {
       latitude: Number(issueData.latitude),
       longitude: Number(issueData.longitude),
       address: issueData.address || `${issueData.latitude.toFixed(4)}, ${issueData.longitude.toFixed(4)}, Metro City`,
-      images: (issueData.images || []).map((imgUrl, index) => ({
+      images: (issueData.images || []).map((img, index) => ({
         id: `img-${Date.now()}-${index}`,
-        imageUrl: typeof imgUrl === 'string' ? imgUrl : URL.createObjectURL(imgUrl),
-        publicId: `upload_${Date.now()}_${index}`,
+        imageUrl: typeof img === 'string' ? img : (img.imageUrl || URL.createObjectURL(img)),
+        publicId: img.publicId || `upload_${Date.now()}_${index}`,
       })),
       confirmationsCount: 1,
       userConfirmed: true,
@@ -153,7 +172,7 @@ export const issueService = {
       const response = await apiClient.post(`/issues/${issueId}/confirm`);
       if (response.data) return response.data;
     } catch (err) {
-      // Fallback
+      console.warn('Backend confirmIssue failed, using local DB:', err.message);
     }
 
     const issues = mockDB.getIssues();
@@ -162,7 +181,7 @@ export const issueService = {
 
     const issue = issues[index];
     if (issue.userConfirmed) {
-      return issue; // Already confirmed
+      return issue;
     }
 
     const updated = {
@@ -186,7 +205,7 @@ export const issueService = {
     try {
       await apiClient.delete(`/issues/${issueId}/confirm`);
     } catch (err) {
-      // Fallback
+      console.warn('Backend unconfirmIssue failed, using local DB:', err.message);
     }
 
     const issues = mockDB.getIssues();
@@ -212,7 +231,7 @@ export const issueService = {
       const response = await apiClient.post(`/issues/${issueId}/comments`, { body });
       if (response.data) return response.data;
     } catch (err) {
-      // Fallback
+      console.warn('Backend addComment failed, using local DB:', err.message);
     }
 
     const newComment = {
@@ -232,6 +251,13 @@ export const issueService = {
   },
 
   async getNearbyIssues(lat, lng, radiusKm = 2.0) {
+    try {
+      const response = await apiClient.get('/issues/nearby', { params: { lat, lng, radiusKm } });
+      if (Array.isArray(response.data)) return response.data;
+    } catch (err) {
+      console.warn('Backend getNearbyIssues failed, using local DB:', err.message);
+    }
+
     const issues = mockDB.getIssues();
     return issues.filter((i) => {
       const dist = calculateDistanceKm(lat, lng, i.latitude, i.longitude);

@@ -123,14 +123,21 @@ export function LoginPage() {
               {...register('email')}
             />
 
-            <Input
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              leftIcon={<Lock className="w-4 h-4" />}
-              error={errors.password?.message}
-              {...register('password')}
-            />
+            <div className="space-y-1">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-semibold text-purple-900 dark:text-purple-200">Password</span>
+                <Link to="/forgot-password" className="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <Input
+                type="password"
+                placeholder="••••••••"
+                leftIcon={<Lock className="w-4 h-4" />}
+                error={errors.password?.message}
+                {...register('password')}
+              />
+            </div>
 
             <Button type="submit" isLoading={loading} className="w-full" size="lg" rightIcon={<ArrowRight className="w-4 h-4" />}>
               Sign In

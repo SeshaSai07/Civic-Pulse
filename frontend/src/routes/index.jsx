@@ -14,6 +14,8 @@ import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
 import { GuestLoginPage } from '../pages/auth/GuestLoginPage';
 import { GuestRegisterPage } from '../pages/auth/GuestRegisterPage';
+import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage';
 import { UnauthorizedPage } from '../pages/auth/UnauthorizedPage';
 import { NotFoundPage } from '../pages/auth/NotFoundPage';
 
@@ -31,6 +33,7 @@ import { AdminIssueReviewPage } from '../pages/admin/AdminIssueReviewPage';
 import { AdminCategoriesPage } from '../pages/admin/AdminCategoriesPage';
 import { AdminUsersPage } from '../pages/admin/AdminUsersPage';
 import { AdminAnalyticsPage } from '../pages/admin/AdminAnalyticsPage';
+import { AdminSettingsPage } from '../pages/admin/AdminSettingsPage';
 
 // Route Guards
 import { ProtectedRoute } from './ProtectedRoute';
@@ -61,6 +64,8 @@ export function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/guest-login" element={<GuestLoginPage />} />
       <Route path="/guest-register" element={<GuestRegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/403" element={<UnauthorizedPage />} />
 
       {/* Dashboard Route (Handles Citizen or Guest dynamically) */}
@@ -144,6 +149,14 @@ export function AppRoutes() {
         element={
           <AdminRoute>
             <AdminAnalyticsPage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <AdminRoute>
+            <AdminSettingsPage />
           </AdminRoute>
         }
       />

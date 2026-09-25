@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   X,
   FileText,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -43,6 +44,7 @@ export function ReportIssuePage() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const [imageFiles, setImageFiles] = useState([]); // Array of { file?: File, previewUrl: string, uploadedUrl?: string, publicId?: string }
 
   // Form State across steps
   const [formData, setFormData] = useState({
@@ -53,7 +55,6 @@ export function ReportIssuePage() {
     latitude: userLocation?.lat || 37.774929,
     longitude: userLocation?.lng || -122.419416,
     address: userLocation?.address || '401 Main St, Downtown Civic Area',
-    images: [],
   });
 
   const [duplicateCandidates, setDuplicateCandidates] = useState([]);
@@ -84,19 +85,19 @@ export function ReportIssuePage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const imageUrls = files.map((file) => URL.createObjectURL(file));
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...imageUrls],
+    const newItems = files.map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      uploadedUrl: null,
+      publicId: null,
     }));
+
+    setImageFiles((prev) => [...prev, ...newItems]);
     toast.success(`Attached ${files.length} evidence photo(s)`);
   };
 
   const removeImage = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Step 3 -> Step 4 Handler (Duplicate Check)
@@ -106,16 +107,42 @@ export function ReportIssuePage() {
     setCurrentStep(4);
   };
 
-  // Final Form Submission
+  // Final Form Submission (Uploads images to POST /api/upload first)
   const handleFinalSubmit = async () => {
     setSubmitting(true);
     try {
-      const created = await issueService.createIssue(formData, user);
+      const uploadedImages = [];
+
+      // Step 1: Upload images to POST /api/upload
+      for (let i = 0; i < imageFiles.length; i++) {
+        const item = imageFiles[i];
+        if (item.uploadedUrl) {
+          uploadedImages.push({ imageUrl: item.uploadedUrl, publicId: item.publicId });
+        } else if (item.file) {
+          toast.info(`Uploading image ${i + 1} of ${imageFiles.length} to /api/upload...`);
+          const uploaded = await issueService.uploadImage(item.file);
+          uploadedImages.push({
+            imageUrl: uploaded.imageUrl,
+            publicId: uploaded.publicId,
+          });
+        } else if (typeof item === 'string') {
+          uploadedImages.push({ imageUrl: item, publicId: `img_${Date.now()}` });
+        }
+      }
+
+      // Step 2: Submit final issue report
+      const payload = {
+        ...formData,
+        images: uploadedImages,
+      };
+
+      const created = await issueService.createIssue(payload, user);
       reloadData();
-      toast.success('Report submitted successfully! Initial priority score calculated.');
+      toast.success('Report submitted successfully! Priority score calculated.');
       navigate(`/issues/${created.id}`);
     } catch (err) {
-      toast.error('Failed to submit report. Please try again.');
+      console.error('Submission error:', err);
+      toast.error(err.message || 'Failed to submit report. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -265,14 +292,16 @@ export function ReportIssuePage() {
                 />
                 <Upload className="w-10 h-10 text-violet-500 mx-auto mb-2" />
                 <h4 className="text-sm font-bold text-purple-950 dark:text-purple-100">Drag and drop photo files or click to browse</h4>
-                <p className="text-xs text-purple-700/70 dark:text-purple-300/70 mt-1">Supports JPG, PNG, WEBP (Max 5MB per file)</p>
+                <p className="text-xs text-purple-700/70 dark:text-purple-300/70 mt-1">
+                  Photos will be uploaded via POST /api/upload before report submission.
+                </p>
               </div>
 
-              {formData.images.length > 0 && (
+              {imageFiles.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
-                  {formData.images.map((img, idx) => (
+                  {imageFiles.map((img, idx) => (
                     <div key={idx} className="relative group h-32 rounded-xl overflow-hidden bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800">
-                      <img src={img} alt="Evidence Upload" className="w-full h-full object-cover" />
+                      <img src={img.previewUrl} alt="Evidence Upload" className="w-full h-full object-cover" />
                       <button
                         onClick={() => removeImage(idx)}
                         className="absolute top-1.5 right-1.5 p-1 bg-rose-600 text-white rounded-full opacity-90 hover:opacity-100 shadow-sm"
@@ -339,6 +368,13 @@ export function ReportIssuePage() {
                 <span className="font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Location Pin</span>
                 <span className="font-mono text-purple-900 dark:text-purple-200">
                   {formData.latitude.toFixed(5)}, {formData.longitude.toFixed(5)}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Attached Photos</span>
+                <span className="font-semibold text-purple-900 dark:text-purple-200">
+                  {imageFiles.length} photo(s) selected
                 </span>
               </div>
             </div>

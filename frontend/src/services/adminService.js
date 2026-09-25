@@ -6,7 +6,7 @@ export const adminService = {
       const response = await apiClient.get('/admin/dashboard');
       if (response.data) return response.data;
     } catch (err) {
-      // Fallback to local mock calculate
+      console.warn('Backend /admin/dashboard unavailable, calculating from mockDB:', err.message);
     }
 
     const issues = mockDB.getIssues();
@@ -19,13 +19,11 @@ export const adminService = {
     const resolvedCount = issues.filter((i) => i.status === 'RESOLVED').length;
     const rejectedCount = issues.filter((i) => i.status === 'REJECTED').length;
 
-    // Category distribution
     const categoryDistribution = categories.map((cat) => ({
       name: cat.name,
       count: issues.filter((i) => i.categoryId === cat.id).length,
     }));
 
-    // Monthly trend mock
     const trendData = [
       { month: 'Apr', Open: 12, Resolved: 10 },
       { month: 'May', Open: 18, Resolved: 15 },
@@ -59,7 +57,7 @@ export const adminService = {
       const response = await apiClient.patch(`/admin/issues/${issueId}/status`, { status: newStatus, note });
       if (response.data) return response.data;
     } catch (err) {
-      // Fallback
+      console.warn('Backend updateStatus failed, using local mockDB:', err.message);
     }
 
     const issues = mockDB.getIssues();
@@ -89,7 +87,6 @@ export const adminService = {
     issues[index] = updated;
     mockDB.setIssues(issues);
 
-    // Audit log entry
     const auditLogs = mockDB.getAuditLogs();
     mockDB.setAuditLogs([
       {
@@ -105,7 +102,6 @@ export const adminService = {
       ...auditLogs,
     ]);
 
-    // Send notification to owner
     const notifications = mockDB.getNotifications();
     mockDB.setNotifications([
       {
@@ -125,6 +121,13 @@ export const adminService = {
   },
 
   async updateIssuePriority(issueId, newScore, note = '', adminUser) {
+    try {
+      const response = await apiClient.patch(`/admin/issues/${issueId}/priority`, { priorityScore: Number(newScore), note });
+      if (response.data) return response.data;
+    } catch (err) {
+      console.warn('Backend updatePriority failed, using local mockDB:', err.message);
+    }
+
     const issues = mockDB.getIssues();
     const index = issues.findIndex((i) => i.id === issueId);
     if (index === -1) throw new Error('Issue not found');
@@ -141,7 +144,6 @@ export const adminService = {
     issues[index] = updated;
     mockDB.setIssues(issues);
 
-    // Audit Log
     const auditLogs = mockDB.getAuditLogs();
     mockDB.setAuditLogs([
       {
@@ -161,13 +163,19 @@ export const adminService = {
   },
 
   async mergeDuplicateIssues(primaryIssueId, duplicateIssueId, note = '', adminUser) {
+    try {
+      const response = await apiClient.post(`/admin/issues/${primaryIssueId}/merge`, { duplicateIssueId, note });
+      if (response.data) return response.data;
+    } catch (err) {
+      console.warn('Backend mergeDuplicateIssues failed, using local mockDB:', err.message);
+    }
+
     const issues = mockDB.getIssues();
     const primary = issues.find((i) => i.id === primaryIssueId);
     const duplicate = issues.find((i) => i.id === duplicateIssueId);
 
     if (!primary || !duplicate) throw new Error('Selected primary or duplicate issue not found');
 
-    // Merge confirmations and mark duplicate as REJECTED with note
     const updatedDuplicate = {
       ...duplicate,
       status: 'REJECTED',
@@ -202,10 +210,23 @@ export const adminService = {
   },
 
   async getCategories() {
+    try {
+      const response = await apiClient.get('/admin/categories');
+      if (Array.isArray(response.data)) return response.data;
+    } catch (err) {
+      console.warn('Backend getCategories failed, using mockDB:', err.message);
+    }
     return mockDB.getCategories();
   },
 
   async addCategory(data) {
+    try {
+      const response = await apiClient.post('/admin/categories', data);
+      if (response.data) return response.data;
+    } catch (err) {
+      console.warn('Backend addCategory failed, using mockDB:', err.message);
+    }
+
     const categories = mockDB.getCategories();
     const newCategory = {
       id: `cat-${Date.now()}`,
@@ -221,6 +242,13 @@ export const adminService = {
   },
 
   async updateCategory(id, updates) {
+    try {
+      const response = await apiClient.patch(`/admin/categories/${id}`, updates);
+      if (response.data) return response.data;
+    } catch (err) {
+      console.warn('Backend updateCategory failed, using mockDB:', err.message);
+    }
+
     const categories = mockDB.getCategories();
     const index = categories.findIndex((c) => c.id === id);
     if (index === -1) throw new Error('Category not found');
@@ -231,10 +259,23 @@ export const adminService = {
   },
 
   async getUsers() {
+    try {
+      const response = await apiClient.get('/admin/users');
+      if (Array.isArray(response.data)) return response.data;
+    } catch (err) {
+      console.warn('Backend getUsers failed, using mockDB:', err.message);
+    }
     return mockDB.getUsers();
   },
 
   async updateUserRole(userId, newRole) {
+    try {
+      const response = await apiClient.patch(`/admin/users/${userId}/role`, { role: newRole });
+      if (response.data) return response.data;
+    } catch (err) {
+      console.warn('Backend updateUserRole failed, using mockDB:', err.message);
+    }
+
     const users = mockDB.getUsers();
     const index = users.findIndex((u) => u.id === userId);
     if (index === -1) throw new Error('User not found');

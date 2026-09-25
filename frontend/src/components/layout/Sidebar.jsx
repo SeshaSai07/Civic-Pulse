@@ -35,6 +35,7 @@ export function Sidebar() {
     { label: 'Categories', path: '/admin/categories', icon: Layers },
     { label: 'User Directory', path: '/admin/users', icon: Users },
     { label: 'Analytics & KPIs', path: '/admin/analytics', icon: BarChart3 },
+    { label: 'System Settings', path: '/admin/settings', icon: Settings },
     { label: 'My Citizen Profile', path: '/profile', icon: User },
   ];
 
